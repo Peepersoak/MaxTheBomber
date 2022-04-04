@@ -3,6 +3,7 @@ import { Utils } from "./components/utils.js";
 import Tile from "./components/Tiles.js";
 
 const utils = new Utils();
+
 const boomSFXImg = utils.requestImage({ source: "./img/BoomSFX.png" });
 const characterImg = utils.requestImage({ source: "./img/Poo.png" });
 const floorImg = utils.requestImage({ source: "./img/Floor.png" });
@@ -40,6 +41,7 @@ export const player = new Tile({
   frameWidth: tileSize,
   frameHeigth: tileSize,
   framePosition: 0,
+  frameStagger: 20,
 });
 
 function initMap() {
@@ -74,14 +76,13 @@ function initMap() {
         })
       );
 
-      count++;
-
       if (
         posX === 0 ||
         posY === 0 ||
         posX === canvas.width - tileSize ||
         posY === canvas.height - tileSize
       ) {
+        // Outline Wall
         tilesArray.push(
           new Tile({
             x: posX,
@@ -98,6 +99,7 @@ function initMap() {
           })
         );
       } else {
+        // Inner Wall
         if (countX % 2 === 0 && countY % 2 === 0) {
           tilesArray.push(
             new Tile({
@@ -114,7 +116,10 @@ function initMap() {
               breakable: false,
             })
           );
-        } else {
+        }
+        // Rocks and Floors
+        else {
+          // Floor
           if (Math.random() > 0.25) {
             tilesArray.push(
               new Tile({
@@ -125,7 +130,10 @@ function initMap() {
                 floor: true,
               })
             );
-          } else {
+          }
+
+          // rocks
+          else {
             rockArrayIndex.push(count);
             tilesArray.push(
               new Tile({
@@ -141,21 +149,28 @@ function initMap() {
                 passable: false,
                 breakable: true,
                 exit: false,
-                powerup: true,
+                powerup: Math.random < 0.15 ? true : false,
               })
             );
           }
         }
       }
       countY++;
+      count++;
     }
     countX++;
   }
-  const randomIndex = Math.floor(Math.random() * rockArrayIndex.length - 1);
-  console.log(randomIndex);
 
-  tilesArray[rockArrayIndex[randomIndex]].exit = true;
-  console.log(tilesArray[rockArrayIndex[randomIndex]]);
+  let hasExit = false;
+  let increments = 1 / rockArrayIndex.length;
+  let percentage = increments;
+  for (let i = 0; i < rockArrayIndex.length; i++) {
+    percentage += increments;
+    if (Math.random() < percentage && !hasExit) {
+      hasExit = true;
+      tilesArray[rockArrayIndex[i]].exit = true;
+    }
+  }
 }
 initMap();
 

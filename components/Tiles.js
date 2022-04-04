@@ -17,6 +17,7 @@ export default class Tiles {
     breakable = false,
     powerup = false,
     floor = false,
+    frameStagger = 10,
   }) {
     this.canvas = canvas;
     this.c = canvas ? this.canvas.getContext("2d") : undefined;
@@ -42,7 +43,7 @@ export default class Tiles {
 
     this.currentFrame = 0;
     this.elapseFrame = 0;
-    this.frameStagger = 10;
+    this.frameStagger = frameStagger;
 
     this.visible = true;
     this.bomb = bomb;
