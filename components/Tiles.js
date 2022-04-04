@@ -3,37 +3,118 @@ export default class Tiles {
     canvas,
     x = 0,
     y = 0,
-    tileSize,
+    tileSize = 100,
     passable = false,
     exit = false,
-    image,
-    maxFrame,
+    image = undefined,
+    maxFrame = 0,
     framePosition = 0,
+    bomb = false,
+    bombImage = undefined,
+    bombDelay = 3,
+    bombMaxFrame = 0,
+    bombRadius = 1,
+    breakable = false,
+    powerup = false,
+    floor = false,
   }) {
     this.canvas = canvas;
-    this.c = this.canvas.getContext("2d");
+    this.c = canvas ? this.canvas.getContext("2d") : undefined;
     this.position = {
       x,
       y,
     };
     this.tileSize = tileSize;
+    this.breakable = breakable;
+    this.powerup = powerup;
+    this.exit = exit;
+    this.floor = floor;
 
     this.passable = passable;
-    this.exit = exit;
     this.image = image;
     this.remove = false;
 
     this.framePosition = framePosition;
     this.maxFrame = maxFrame;
-    this.frameWidth = this.image.width / maxFrame;
-    this.frameHeigth = this.image.height;
+    this.frameWidth =
+      (this.image ? this.image.width : this.tileSize) / this.maxFrame;
+    this.frameHeigth = this.image ? this.image.height : this.tileSize;
 
     this.currentFrame = 0;
     this.elapseFrame = 0;
     this.frameStagger = 10;
+
+    this.visible = true;
+    this.bomb = bomb;
+    this.bombImage = bombImage;
+    this.bombMaxFrame = bombMaxFrame;
+    this.bombFrameWidth = 224 / this.bombMaxFrame;
+    this.bombDelay = bombDelay;
+    this.explosionTime = Date.now() + bombDelay * 1000;
+
+    this.bombCurrentFrame = 0;
+    this.bombElapseTime = 0;
+    this.bombFrameStagger = 10;
+    this.bombRadius = bombRadius;
+    this.bombLimit = 1;
+  }
+
+  getRemoveWalls() {
+    const walls = [];
+    for (
+      let posX = this.position.x - this.tileSize * this.bombRadius;
+      posX <= this.position.x + this.tileSize * this.bombRadius;
+      posX += this.tileSize
+    ) {
+      for (
+        let posY = this.position.y - this.tileSize * this.bombRadius;
+        posY <= this.position.y + this.tileSize * this.bombRadius;
+        posY += this.tileSize
+      ) {
+        if (posX === this.position.x || posY === this.position.y) {
+          walls.push({ posX: posX, posY: posY });
+        }
+      }
+    }
+    return walls;
+  }
+
+  tick() {
+    if (!this.bomb) return;
+    if (this.remove) return;
+    const now = Date.now();
+
+    if (now > this.explosionTime) {
+      this.visible = false;
+
+      this.getRemoveWalls().forEach((wall) => {
+        this.c.drawImage(
+          this.bombImage,
+          this.bombCurrentFrame * this.bombFrameWidth,
+          0,
+          this.bombFrameWidth,
+          this.bombImage.height,
+          wall.posX,
+          wall.posY,
+          this.tileSize,
+          this.tileSize
+        );
+      });
+
+      this.bombElapseTime++;
+      if (this.bombElapseTime % this.bombFrameStagger === 0) {
+        this.bombElapseTime = 0;
+        this.bombCurrentFrame++;
+      }
+      if (this.bombCurrentFrame >= this.bombMaxFrame) {
+        this.remove = true;
+      }
+    }
   }
 
   draw() {
+    if (!this.visible) return;
+
     if (this.image) {
       this.c.drawImage(
         this.image,
@@ -54,13 +135,15 @@ export default class Tiles {
       }
       if (this.currentFrame >= this.maxFrame) this.currentFrame = 0;
     } else {
-      this.c.fillStyle = "pink";
-      this.c.fillRect(
-        this.position.x,
-        this.position.y,
-        this.tileSize,
-        this.tileSize
-      );
+      if (this.c) {
+        this.c.fillStyle = "pink";
+        this.c.fillRect(
+          this.position.x,
+          this.position.y,
+          this.tileSize,
+          this.tileSize
+        );
+      }
     }
   }
 
@@ -75,8 +158,12 @@ export default class Tiles {
             this.position.y - this.tileSize === obs.position.y &&
             obs.passable
           ) {
+            if (obs.powerup) {
+              this.bombLimit++;
+              obs.remove = true;
+            }
             this.position.y -= this.tileSize;
-            return;
+            return obs.powerup ? i : false;
           }
           break;
         case "down":
@@ -85,8 +172,12 @@ export default class Tiles {
             this.position.y + this.tileSize === obs.position.y &&
             obs.passable
           ) {
+            if (obs.powerup) {
+              this.bombLimit++;
+              obs.remove = true;
+            }
             this.position.y += this.tileSize;
-            return;
+            return obs.powerup ? i : false;
           }
           break;
         case "left":
@@ -95,8 +186,12 @@ export default class Tiles {
             this.position.y === obs.position.y &&
             obs.passable
           ) {
+            if (obs.powerup) {
+              this.bombLimit++;
+              obs.remove = true;
+            }
             this.position.x -= this.tileSize;
-            return;
+            return obs.powerup ? i : false;
           }
           break;
         case "right":
@@ -105,8 +200,12 @@ export default class Tiles {
             this.position.y === obs.position.y &&
             obs.passable
           ) {
+            if (obs.powerup) {
+              this.bombLimit++;
+              obs.remove = true;
+            }
             this.position.x += this.tileSize;
-            return;
+            return obs.powerup ? i : false;
           }
           break;
       }
