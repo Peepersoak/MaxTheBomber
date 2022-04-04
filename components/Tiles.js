@@ -80,7 +80,7 @@ export default class Tiles {
     return walls;
   }
 
-  tick() {
+  tick(player) {
     if (!this.bomb) return;
     if (this.remove) return;
     const now = Date.now();
@@ -89,6 +89,12 @@ export default class Tiles {
       this.visible = false;
 
       this.getRemoveWalls().forEach((wall) => {
+        if (
+          wall.posX === player.position.x &&
+          wall.posY === player.position.y
+        ) {
+          player.remove = true;
+        }
         this.c.drawImage(
           this.bombImage,
           this.bombCurrentFrame * this.bombFrameWidth,
@@ -134,7 +140,9 @@ export default class Tiles {
         this.elapseFrame = 0;
         this.currentFrame++;
       }
-      if (this.currentFrame >= this.maxFrame) this.currentFrame = 0;
+      if (this.currentFrame >= this.maxFrame) {
+        if (!this.remove) this.currentFrame = 0;
+      }
     } else {
       if (this.c) {
         this.c.fillStyle = "pink";
@@ -149,6 +157,7 @@ export default class Tiles {
   }
 
   move(direction, obstacle) {
+    if (this.remove) return;
     for (let i = 0; i < obstacle.length; i++) {
       const obs = obstacle[i];
 

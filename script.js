@@ -10,7 +10,7 @@ const floorImg = utils.requestImage({ source: "./img/Floor.png" });
 const maxBombImg = utils.requestImage({ source: "./img/MaxBomb.png" });
 const rockImg = utils.requestImage({ source: "./img/Rock.png" });
 const wallImg = utils.requestImage({ source: "./img/Wall.png" });
-const flushImg = utils.requestImage({ source: "./img/Flush.png" });
+const deathImg = utils.requestImage({ source: "./img/DeathSFX.png" });
 const toiletImg = utils.requestImage({ source: "./img/Toilet.png" });
 const milkImg = utils.requestImage({ source: "./img/Milk.png" });
 
@@ -31,18 +31,7 @@ let rockArrayIndex = [];
 
 let activeBomb = 0;
 
-export const player = new Tile({
-  canvas: canvas,
-  image: characterImg,
-  x: tileSize,
-  y: tileSize,
-  tileSize: tileSize,
-  maxFrame: 2,
-  frameWidth: tileSize,
-  frameHeigth: tileSize,
-  framePosition: 0,
-  frameStagger: 20,
-});
+let player;
 
 function initMap() {
   tileSize = Math.floor(canvas.width / grid);
@@ -149,7 +138,7 @@ function initMap() {
                 passable: false,
                 breakable: true,
                 exit: false,
-                powerup: Math.random < 0.15 ? true : false,
+                powerup: Math.random() < 0.15 ? true : false,
               })
             );
           }
@@ -172,7 +161,6 @@ function initMap() {
     }
   }
 }
-initMap();
 
 window.addEventListener("keydown", (event) => {
   switch (event.key) {
@@ -232,7 +220,7 @@ function animate() {
   );
 
   bombsArray.forEach((bomb) => {
-    bomb.tick();
+    bomb.tick(player);
 
     if (bomb.remove) {
       activeBomb--;
@@ -294,7 +282,41 @@ function animate() {
   tilesArray = tilesArray.filter((tile) => tile.remove === false);
   powerupArray = powerupArray.filter((powerup) => powerup.remove === false);
 
-  if (player) player.update();
+  if (player) {
+    player.update();
+    if (player.remove) {
+      player.image = deathImg;
+      player.maxFrame = 6;
+    }
+  }
 }
 
-animate();
+let intervalID = setInterval(() => {
+  if (
+    boomSFXImg.complete &&
+    characterImg.complete &&
+    floorImg.complete &&
+    maxBombImg.complete &&
+    rockImg.complete &&
+    wallImg.complete &&
+    deathImg.complete &&
+    toiletImg.complete &&
+    milkImg.complete
+  ) {
+    player = new Tile({
+      canvas: canvas,
+      image: characterImg,
+      x: tileSize,
+      y: tileSize,
+      tileSize: tileSize,
+      maxFrame: 2,
+      frameWidth: tileSize,
+      frameHeigth: tileSize,
+      framePosition: 0,
+      frameStagger: 20,
+    });
+    initMap();
+    animate();
+    clearInterval(intervalID);
+  }
+});
