@@ -1,19 +1,21 @@
 "use strict";
 import { Utils } from "./components/utils.js";
 import Tile from "./components/Tiles.js";
+import { imageAreReady, loadAllImages, mapLevel } from "./components/Images.js";
+
+loadAllImages();
 
 const utils = new Utils();
 
 const boomSFXImg = utils.requestImage({ source: "./img/BoomSFX.png" });
-const characterImg = utils.requestImage({ source: "./img/Poo.png" });
-const floorImg = utils.requestImage({ source: "./img/Floor.png" });
-const maxBombImg = utils.requestImage({ source: "./img/MaxBomb2.png" });
-const rockImg = utils.requestImage({ source: "./img/Rock.png" });
-const wallImg = utils.requestImage({ source: "./img/Wall.png" });
 const deathImg = utils.requestImage({ source: "./img/DeathSFX.png" });
-const toiletImg = utils.requestImage({ source: "./img/Toilet.png" });
-const milkImg = utils.requestImage({ source: "./img/BombPowerup.png" });
 const nextLevelAnim = utils.requestImage({ source: "./img/MaxNext.png" });
+
+let characterImg = utils.requestImage({ source: "./img/Poo.png" });
+let maxBombImg = utils.requestImage({ source: "./img/MaxBomb2.png" });
+let milkImg = utils.requestImage({ source: "./img/BombPowerup.png" });
+
+let floorImg, rockImg, wallImg, exitImg;
 
 const menu = document.querySelector(".menu");
 
@@ -22,12 +24,12 @@ const c = canvas.getContext("2d");
 canvas.width = 1000;
 canvas.height = 1000;
 
-let grid = 11;
+let grid = 9;
 
 let tileSize = 50;
 
-const safeZone = [];
-const floorArray = [];
+let safeZone = [];
+let floorArray = [];
 let tilesArray = [];
 let bombsArray = [];
 let powerupArray = [];
@@ -37,7 +39,21 @@ let activeBomb = 0;
 
 let player;
 
+let currentLevelCount = 0;
+let playerMapLevel = 0;
+
+let playerLevel = 0;
+
 function initMap() {
+  const map = mapLevel.find((map) => map.level === playerMapLevel);
+
+  floorImg = map.floor;
+  rockImg = map.rock;
+  wallImg = map.wall;
+  exitImg = map.exit;
+
+  safeZone = [];
+  floorArray = [];
   tilesArray = [];
   bombsArray = [];
   powerupArray = [];
@@ -167,17 +183,17 @@ function initMap() {
     countX++;
   }
 
-  tilesArray[rockArrayIndex[0]].exit = true;
-  // let hasExit = false;
-  // let increments = 1 / rockArrayIndex.length;
-  // let percentage = increments;
-  // for (let i = 0; i < rockArrayIndex.length; i++) {
-  //   percentage += increments;
-  //   if (Math.random() < percentage && !hasExit) {
-  //     hasExit = true;
-  //     tilesArray[rockArrayIndex[i]].exit = true;
-  //   }
-  // }
+  // tilesArray[rockArrayIndex[0]].exit = true; // For testing purposes only
+  let hasExit = false;
+  let increments = 1 / rockArrayIndex.length;
+  let percentage = increments;
+  for (let i = 0; i < rockArrayIndex.length; i++) {
+    percentage += increments;
+    if (Math.random() < percentage && !hasExit) {
+      hasExit = true;
+      tilesArray[rockArrayIndex[i]].exit = true;
+    }
+  }
 }
 
 function isInSafeZone(posX, posY) {
@@ -253,6 +269,7 @@ window.addEventListener("keydown", (event) => {
 
 function animate() {
   requestAnimationFrame(animate);
+  console.log();
 
   c.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -281,7 +298,7 @@ function animate() {
                   y: wall.posY,
                   tileSize: tileSize,
                   canvas: canvas,
-                  image: toiletImg,
+                  image: exitImg,
                   maxFrame: 1,
                   frameWidth: tileSize,
                   frameHeigth: tileSize,
@@ -311,6 +328,28 @@ function animate() {
                   frameStagger: 20,
                 })
               );
+            } else if (
+              Math.random() < 0.25 &&
+              !tile.passable &&
+              tile.breakable
+            ) {
+              const bomb = new Tile({
+                x: wall.posX,
+                y: wall.posY,
+                tileSize: tileSize,
+                canvas: canvas,
+                image: maxBombImg,
+                passable: false,
+                maxFrame: 3,
+                frameWidth: tileSize,
+                frameHeigth: tileSize,
+                framePosition: 0,
+                bombImage: boomSFXImg,
+                bomb: true,
+                bombMaxFrame: 7,
+                breakable: true,
+              });
+              bombsArray.push(bomb);
             }
             if (tile.breakable) {
               tile.passable = true;
@@ -339,8 +378,24 @@ function animate() {
       player.frameStagger = 5;
     }
     if (player.moveNext) {
-      initMap();
       player.moveNext = false;
+      if (currentLevelCount >= 4) {
+        playerLevel++;
+        currentLevelCount = 0;
+        if (grid < 20) {
+          grid += 2;
+        }
+
+        if (playerMapLevel < mapLevel.length - 1) {
+          playerMapLevel++;
+        } else {
+          playerMapLevel = 0;
+        }
+      } else {
+        currentLevelCount++;
+      }
+
+      initMap();
     }
   }
 }
@@ -349,13 +404,10 @@ let intervalID = setInterval(() => {
   if (
     boomSFXImg.complete &&
     characterImg.complete &&
-    floorImg.complete &&
     maxBombImg.complete &&
-    rockImg.complete &&
-    wallImg.complete &&
     deathImg.complete &&
-    toiletImg.complete &&
-    milkImg.complete
+    milkImg.complete &&
+    imageAreReady
   ) {
     player = new Tile({
       canvas: canvas,
