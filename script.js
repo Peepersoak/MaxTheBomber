@@ -7,22 +7,26 @@ const utils = new Utils();
 const boomSFXImg = utils.requestImage({ source: "./img/BoomSFX.png" });
 const characterImg = utils.requestImage({ source: "./img/Poo.png" });
 const floorImg = utils.requestImage({ source: "./img/Floor.png" });
-const maxBombImg = utils.requestImage({ source: "./img/MaxBomb.png" });
+const maxBombImg = utils.requestImage({ source: "./img/MaxBomb2.png" });
 const rockImg = utils.requestImage({ source: "./img/Rock.png" });
 const wallImg = utils.requestImage({ source: "./img/Wall.png" });
 const deathImg = utils.requestImage({ source: "./img/DeathSFX.png" });
 const toiletImg = utils.requestImage({ source: "./img/Toilet.png" });
-const milkImg = utils.requestImage({ source: "./img/Milk.png" });
+const milkImg = utils.requestImage({ source: "./img/BombPowerup.png" });
+const nextLevelAnim = utils.requestImage({ source: "./img/MaxNext.png" });
+
+const menu = document.querySelector(".menu");
 
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
 canvas.width = 1000;
 canvas.height = 1000;
 
-const grid = 11;
+let grid = 11;
 
 let tileSize = 50;
 
+const safeZone = [];
 const floorArray = [];
 let tilesArray = [];
 let bombsArray = [];
@@ -34,17 +38,30 @@ let activeBomb = 0;
 let player;
 
 function initMap() {
+  tilesArray = [];
+  bombsArray = [];
+  powerupArray = [];
+  rockArrayIndex = [];
+  activeBomb = 0;
+
   tileSize = Math.floor(canvas.width / grid);
   canvas.width = tileSize * grid;
   canvas.height = tileSize * grid;
 
+  safeZone.push({ x: tileSize, y: tileSize });
+  safeZone.push({ x: tileSize * 2, y: tileSize });
+  safeZone.push({ x: tileSize, y: tileSize * 2 });
+
   player.tileSize = tileSize;
   player.position.x = tileSize;
   player.position.y = tileSize;
+  player.image = characterImg;
+  player.maxFrame = 2;
+  player.framePosition = 0;
+  player.frameStagger = 20;
 
   let countX = 2;
   let countY = 2;
-
   let count = 0;
 
   for (let posX = 0; posX <= canvas.width - tileSize; posX += tileSize) {
@@ -109,7 +126,7 @@ function initMap() {
         // Rocks and Floors
         else {
           // Floor
-          if (Math.random() > 0.25) {
+          if (Math.random() > 0.25 || isInSafeZone(posX, posY)) {
             tilesArray.push(
               new Tile({
                 x: posX,
@@ -150,31 +167,57 @@ function initMap() {
     countX++;
   }
 
-  let hasExit = false;
-  let increments = 1 / rockArrayIndex.length;
-  let percentage = increments;
-  for (let i = 0; i < rockArrayIndex.length; i++) {
-    percentage += increments;
-    if (Math.random() < percentage && !hasExit) {
-      hasExit = true;
-      tilesArray[rockArrayIndex[i]].exit = true;
+  tilesArray[rockArrayIndex[0]].exit = true;
+  // let hasExit = false;
+  // let increments = 1 / rockArrayIndex.length;
+  // let percentage = increments;
+  // for (let i = 0; i < rockArrayIndex.length; i++) {
+  //   percentage += increments;
+  //   if (Math.random() < percentage && !hasExit) {
+  //     hasExit = true;
+  //     tilesArray[rockArrayIndex[i]].exit = true;
+  //   }
+  // }
+}
+
+function isInSafeZone(posX, posY) {
+  for (let i = 0; i < safeZone.length; i++) {
+    const tempX = safeZone[i].x;
+    const tempY = safeZone[i].y;
+
+    if (posX === tempX && posY === tempY) {
+      return true;
     }
   }
+  return false;
 }
 
 window.addEventListener("keydown", (event) => {
+  if (!player.isPlaying) {
+    if (event.key === "Enter") {
+      player.isPlaying = true;
+      menu.style.opacity = "0";
+
+      if (player.remove) {
+        player.remove = false;
+        initMap();
+      }
+    }
+    return;
+  }
+
   switch (event.key) {
     case "w":
-      const powerUpW = player.move("up", [...powerupArray, ...tilesArray]);
+      player.move("up", [...powerupArray, ...tilesArray]);
       break;
     case "a":
-      const powerUpA = player.move("left", [...powerupArray, ...tilesArray]);
+      player.move("left", [...powerupArray, ...tilesArray]);
       break;
     case "s":
-      const powerUpS = player.move("down", [...powerupArray, ...tilesArray]);
+      player.move("down", [...powerupArray, ...tilesArray]);
       break;
     case "d":
-      const powerUpD = player.move("right", [...powerupArray, ...tilesArray]);
+      player.move("right", [...powerupArray, ...tilesArray]);
       break;
     case " ":
       if (activeBomb >= player.bombLimit) return;
@@ -246,6 +289,7 @@ function animate() {
                   passable: true,
                   breakable: false,
                   powerup: false,
+                  exit: true,
                 })
               );
             } else if (tile.powerup && !tile.passable) {
@@ -264,6 +308,7 @@ function animate() {
                   passable: true,
                   breakable: true,
                   powerup: true,
+                  frameStagger: 20,
                 })
               );
             }
@@ -287,6 +332,15 @@ function animate() {
     if (player.remove) {
       player.image = deathImg;
       player.maxFrame = 6;
+    }
+    if (player.nextLevel) {
+      player.image = nextLevelAnim;
+      player.maxFrame = 15;
+      player.frameStagger = 5;
+    }
+    if (player.moveNext) {
+      initMap();
+      player.moveNext = false;
     }
   }
 }

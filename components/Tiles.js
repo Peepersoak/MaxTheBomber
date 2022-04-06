@@ -18,6 +18,8 @@ export default class Tiles {
     powerup = false,
     floor = false,
     frameStagger = 10,
+    isPlaying = false,
+    nextLevel = false,
   }) {
     this.canvas = canvas;
     this.c = canvas ? this.canvas.getContext("2d") : undefined;
@@ -30,6 +32,9 @@ export default class Tiles {
     this.powerup = powerup;
     this.exit = exit;
     this.floor = floor;
+    this.isPlaying = isPlaying;
+    this.nextLevel = nextLevel;
+    this.moveNext = false;
 
     this.passable = passable;
     this.image = image;
@@ -88,12 +93,17 @@ export default class Tiles {
     if (now > this.explosionTime) {
       this.visible = false;
 
+      if (this.bombCurrentFrame >= this.bombMaxFrame) {
+        this.remove = true;
+      }
+
       this.getRemoveWalls().forEach((wall) => {
         if (
           wall.posX === player.position.x &&
           wall.posY === player.position.y
         ) {
           player.remove = true;
+          player.isPlaying = false;
         }
         this.c.drawImage(
           this.bombImage,
@@ -112,9 +122,6 @@ export default class Tiles {
       if (this.bombElapseTime % this.bombFrameStagger === 0) {
         this.bombElapseTime = 0;
         this.bombCurrentFrame++;
-      }
-      if (this.bombCurrentFrame >= this.bombMaxFrame) {
-        this.remove = true;
       }
     }
   }
@@ -141,7 +148,11 @@ export default class Tiles {
         this.currentFrame++;
       }
       if (this.currentFrame >= this.maxFrame) {
-        if (!this.remove) this.currentFrame = 0;
+        if (!this.remove && !this.nextLevel) this.currentFrame = 0;
+        if (this.nextLevel) {
+          this.moveNext = true;
+          this.nextLevel = false;
+        }
       }
     } else {
       if (this.c) {
@@ -172,8 +183,12 @@ export default class Tiles {
               this.bombLimit++;
               obs.remove = true;
             }
+            if (obs.exit) {
+              this.nextLevel = true;
+            }
+
             this.position.y -= this.tileSize;
-            return obs.powerup ? i : false;
+            return;
           }
           break;
         case "down":
@@ -186,8 +201,12 @@ export default class Tiles {
               this.bombLimit++;
               obs.remove = true;
             }
+            if (obs.exit) {
+              this.nextLevel = true;
+            }
+
             this.position.y += this.tileSize;
-            return obs.powerup ? i : false;
+            return;
           }
           break;
         case "left":
@@ -200,8 +219,12 @@ export default class Tiles {
               this.bombLimit++;
               obs.remove = true;
             }
+            if (obs.exit) {
+              this.nextLevel = true;
+            }
+
             this.position.x -= this.tileSize;
-            return obs.powerup ? i : false;
+            return;
           }
           break;
         case "right":
@@ -214,8 +237,12 @@ export default class Tiles {
               this.bombLimit++;
               obs.remove = true;
             }
+            if (obs.exit) {
+              this.nextLevel = true;
+            }
+
             this.position.x += this.tileSize;
-            return obs.powerup ? i : false;
+            return;
           }
           break;
       }
