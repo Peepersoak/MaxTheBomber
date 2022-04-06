@@ -75,6 +75,7 @@ function initMap() {
   player.maxFrame = 2;
   player.framePosition = 0;
   player.frameStagger = 20;
+  player.bombLimit = 1;
 
   let countX = 2;
   let countY = 2;
@@ -350,6 +351,7 @@ function animate() {
                 breakable: true,
               });
               bombsArray.push(bomb);
+              activeBomb++;
             }
             if (tile.breakable) {
               tile.passable = true;
