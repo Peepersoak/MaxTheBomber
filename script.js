@@ -3,6 +3,8 @@ import { Utils } from "./components/utils.js";
 import Tile from "./components/Tiles.js";
 import { imageAreReady, loadAllImages, mapLevel } from "./components/Images.js";
 
+const gameName = "MaxPotatoeGame";
+
 loadAllImages();
 
 const utils = new Utils();
@@ -20,6 +22,13 @@ let milkImg = utils.requestImage({ source: "./img/BombPowerup.png" });
 let floorImg, rockImg, wallImg, exitImg;
 
 const menu = document.querySelector(".menu");
+
+const level = document.querySelector(".level");
+const score = document.querySelector(".score");
+const highscore = document.querySelector(".highscore");
+let title = document.querySelector(".title");
+let desc = document.querySelector(".desc");
+let playerScoreDesc = document.querySelector(".playerscore");
 
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
@@ -45,6 +54,8 @@ let currentLevelCount = 0;
 let playerMapLevel = 0;
 
 let playerLevel = 0;
+let playerScore = 0;
+let playerHighScore = 0;
 
 function initMap() {
   const map = mapLevel.find((map) => map.level === playerMapLevel);
@@ -273,6 +284,9 @@ window.addEventListener("keydown", (event) => {
 
 function animate() {
   requestAnimationFrame(animate);
+  level.textContent = `Level: ${playerLevel + 1}`;
+  score.textContent = `Score: ${playerScore}`;
+  highscore.textContent = `Highscore: ${playerHighScore}`;
 
   c.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -295,6 +309,7 @@ function animate() {
               tile.passable = true;
             }
             if (tile.exit) {
+              playerScore += 10;
               tilesArray.push(
                 new Tile({
                   x: wall.posX,
@@ -357,6 +372,9 @@ function animate() {
               activeBomb++;
             }
             if (tile.breakable) {
+              const addScore = Math.ceil(Math.random() * 5 + 1);
+              playerScore += addScore;
+              saveHighScore(playerScore);
               tile.passable = true;
               tile.visible = false;
               if (tile.powerup) tile.powerup = false;
@@ -376,6 +394,12 @@ function animate() {
     if (player.remove) {
       player.image = deathImg;
       player.maxFrame = 6;
+
+      title.textContent = "Game Over!!";
+      desc.textContent = "Press ENTER to restart";
+      playerScoreDesc.textContent = `Your total score: ${playerScore}`;
+
+      menu.style.opacity = "1";
     }
     if (player.nextLevel) {
       player.image = nextLevelAnim;
@@ -384,13 +408,12 @@ function animate() {
     }
     if (player.moveNext) {
       player.moveNext = false;
+      playerLevel++;
       if (currentLevelCount >= 4) {
-        playerLevel++;
         currentLevelCount = 0;
         if (grid < 20) {
           grid += 2;
         }
-
         if (playerMapLevel < mapLevel.length - 1) {
           playerMapLevel++;
         } else {
@@ -399,7 +422,6 @@ function animate() {
       } else {
         currentLevelCount++;
       }
-
       initMap();
     }
   }
@@ -426,8 +448,24 @@ let intervalID = setInterval(() => {
       framePosition: 0,
       frameStagger: 20,
     });
+    restoreHighscore();
     initMap();
     animate();
     clearInterval(intervalID);
   }
 });
+
+function saveHighScore(score) {
+  if (score > playerHighScore) {
+    playerHighScore = score;
+    window.localStorage.setItem(gameName, playerHighScore);
+  }
+}
+
+function restoreHighscore() {
+  if (window.localStorage.getItem(gameName) !== null) {
+    playerHighScore = localStorage.getItem(gameName);
+  } else {
+    playerHighScore = 0;
+  }
+}

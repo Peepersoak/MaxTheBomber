@@ -8,14 +8,26 @@
     <title>Max the Bomber</title>
   </head>
   <body>
-    <div class="flex">
-      <div class="menu">
-        <div class="text-wrapper">
-          <h1 class="title center">Max Potatoe</h1>
-          <p class="desc center instrc">Press ENTER to start</p>
+    <div class="game-wrapper">
+      <div>
+        <div class="score-warpper">
+          <div class="scores">
+            <h2 class="level">Level: 1</h2>
+            <h2 class="score">Score: 0</h2>
+            <h2 class="highscore">Highscore: 0</h2>
+          </div>
+        </div>
+        <div class="flex">
+          <div class="menu">
+            <div class="text-wrapper">
+              <h1 class="title center">Max Potatoe</h1>
+              <p class="desc center instrc">Press ENTER to start</p>
+              <p class="playerscore center"></p>
+            </div>
+          </div>
+          <canvas></canvas>
         </div>
       </div>
-      <canvas></canvas>
     </div>
     <script src="script.js" type="module"></script>
   </body>

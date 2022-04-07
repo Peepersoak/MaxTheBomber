@@ -10,11 +10,10 @@ p {
 
 body {
   margin: 0;
-  background: black;
+  background: linear-gradient(0deg, #90cbff, #cfe8ff);
 }
 
 .flex {
-  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -58,11 +57,38 @@ canvas {
   animation-direction: alternate;
 }
 
+.score-warpper {
+  display: flex;
+  justify-content: center;
+}
+
+.scores {
+  width: 100%;
+  height: 100%;
+  max-width: 80vh;
+}
+
+.level,
+.score,
+.highscore {
+  font-family: "Nerko One", cursive;
+  color: rgb(17, 78, 121);
+  margin: 0;
+  margin-left: 3%;
+}
+
+.game-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
 @keyframes moveMenu {
   from {
-    padding-top: 0px;
+    transform: translateY(0px);
   }
   to {
-    padding-top: 10px;
+    transform: translateY(10px);
   }
 }
