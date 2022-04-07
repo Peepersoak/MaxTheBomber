@@ -10,6 +10,7 @@ loadAllImages();
 const utils = new Utils();
 
 const plantAudio = new Audio("./sound/plant.wav");
+const theme = new Audio("./sound/theme.wav");
 
 const boomSFXImg = utils.requestImage({ source: "./img/BoomSFX.png" });
 const deathImg = utils.requestImage({ source: "./img/DeathSFX.png" });
@@ -74,6 +75,7 @@ function initMap() {
   powerupArray = [];
   rockArrayIndex = [];
   activeBomb = 0;
+  enemyBombSpawn = 0;
 
   tileSize = Math.floor(canvas.width / grid);
   canvas.width = tileSize * grid;
@@ -90,7 +92,7 @@ function initMap() {
   player.maxFrame = 2;
   player.framePosition = 0;
   player.frameStagger = 20;
-  player.bombLimit = 1;
+  player.bombLimit = Math.ceil(player.bombLimit / 2);
 
   let countX = 2;
   let countY = 2;
@@ -227,11 +229,20 @@ function isInSafeZone(posX, posY) {
 window.addEventListener("keydown", (event) => {
   if (!player.isPlaying) {
     if (event.key === "Enter") {
+      theme.volume = 0.2;
+      theme.pause();
+      theme.currentTime = 0;
+      theme.play();
+
       player.isPlaying = true;
       menu.style.opacity = "0";
 
       if (player.remove) {
         player.remove = false;
+        playerMapLevel = 0;
+        playerLevel = 0;
+        playerScore = 0;
+        grid = 9;
         initMap();
       }
     }
@@ -286,6 +297,7 @@ window.addEventListener("keydown", (event) => {
 
 function animate() {
   requestAnimationFrame(animate);
+  playTheme();
 
   level.textContent = `Level: ${playerLevel + 1}`;
   score.textContent = `Score: ${playerScore}`;
@@ -303,93 +315,96 @@ function animate() {
     bomb.tick(player);
 
     if (bomb.remove) {
-      if (!bomb.bombEnemy) {
-        activeBomb--;
-      } else {
+      if (bomb.bombEnemy) {
         enemyBombSpawn--;
-      }
-      const walls = bomb.getRemoveWalls();
-      walls.forEach((wall) => {
-        [...tilesArray, ...powerupArray].forEach((tile) => {
-          if (wall.posX === tile.position.x && wall.posY === tile.position.y) {
-            if (tile.floor) {
-              tile.passable = true;
-            }
-            if (bomb.bombEnemy) return;
-            if (tile.exit) {
-              tilesArray.push(
-                new Tile({
-                  x: wall.posX,
-                  y: wall.posY,
-                  tileSize: tileSize,
-                  canvas: canvas,
-                  image: exitImg,
-                  maxFrame: 1,
-                  frameWidth: tileSize,
-                  frameHeigth: tileSize,
-                  framePosition: 0,
-                  passable: true,
-                  breakable: false,
-                  powerup: false,
-                  exit: true,
-                })
-              );
-            } else if (tile.powerup && !tile.passable) {
-              tile.powerup = false;
-              powerupArray.push(
-                new Tile({
-                  x: wall.posX,
-                  y: wall.posY,
-                  tileSize: tileSize,
-                  canvas: canvas,
-                  image: milkImg,
-                  maxFrame: 2,
-                  frameWidth: tileSize,
-                  frameHeigth: tileSize,
-                  framePosition: 0,
-                  passable: true,
-                  breakable: true,
-                  powerup: true,
-                  frameStagger: 20,
-                })
-              );
-            } else if (
-              Math.random() < 0.25 &&
-              !tile.passable &&
-              tile.breakable
+      } else {
+        activeBomb--;
+        const walls = bomb.getRemoveWalls();
+        walls.forEach((wall) => {
+          [...tilesArray, ...powerupArray].forEach((tile) => {
+            if (
+              wall.posX === tile.position.x &&
+              wall.posY === tile.position.y
             ) {
-              const bomb = new Tile({
-                x: wall.posX,
-                y: wall.posY,
-                tileSize: tileSize,
-                canvas: canvas,
-                image: maxBombImg,
-                passable: false,
-                maxFrame: 3,
-                frameWidth: tileSize,
-                frameHeigth: tileSize,
-                framePosition: 0,
-                bombImage: boomSFXImg,
-                bomb: true,
-                bombMaxFrame: 7,
-                bombDelay: 1,
-                breakable: true,
-              });
-              bombsArray.push(bomb);
-              activeBomb++;
+              if (tile.floor) {
+                tile.passable = true;
+              }
+
+              if (tile.exit) {
+                tilesArray.push(
+                  new Tile({
+                    x: wall.posX,
+                    y: wall.posY,
+                    tileSize: tileSize,
+                    canvas: canvas,
+                    image: exitImg,
+                    maxFrame: 1,
+                    frameWidth: tileSize,
+                    frameHeigth: tileSize,
+                    framePosition: 0,
+                    passable: true,
+                    breakable: false,
+                    powerup: false,
+                    exit: true,
+                  })
+                );
+              } else if (tile.powerup && !tile.passable) {
+                tile.powerup = false;
+                powerupArray.push(
+                  new Tile({
+                    x: wall.posX,
+                    y: wall.posY,
+                    tileSize: tileSize,
+                    canvas: canvas,
+                    image: milkImg,
+                    maxFrame: 2,
+                    frameWidth: tileSize,
+                    frameHeigth: tileSize,
+                    framePosition: 0,
+                    passable: true,
+                    breakable: true,
+                    powerup: true,
+                    frameStagger: 20,
+                  })
+                );
+              } else if (
+                Math.random() < 0.25 &&
+                !tile.passable &&
+                tile.breakable
+              ) {
+                const bomb = new Tile({
+                  x: wall.posX,
+                  y: wall.posY,
+                  tileSize: tileSize,
+                  canvas: canvas,
+                  image: maxBombImg,
+                  passable: false,
+                  maxFrame: 3,
+                  frameWidth: tileSize,
+                  frameHeigth: tileSize,
+                  framePosition: 0,
+                  bombImage: boomSFXImg,
+                  bomb: true,
+                  bombMaxFrame: 7,
+                  bombDelay: 1,
+                  breakable: true,
+                });
+                bombsArray.push(bomb);
+                activeBomb++;
+              }
+              if (tile.breakable) {
+                const addScore = Math.ceil(Math.random() * 5 + 1);
+                playerScore += addScore;
+                saveHighScore(playerScore);
+                tile.passable = true;
+                tile.visible = false;
+                tile.breakable = false;
+                if (tile.powerup) tile.powerup = false;
+              }
             }
-            if (tile.breakable) {
-              const addScore = Math.ceil(Math.random() * 5 + 1);
-              playerScore += addScore;
-              saveHighScore(playerScore);
-              tile.passable = true;
-              tile.visible = false;
-              tile.breakable = false;
-              if (tile.powerup) tile.powerup = false;
-            }
-          }
+          });
         });
-      });
+      }
     }
   });
 
@@ -409,6 +424,8 @@ function animate() {
       playerScoreDesc.textContent = `Your total score: ${playerScore}`;
 
       menu.style.opacity = "1";
+
+      theme.pause();
     }
     if (player.nextLevel) {
       player.image = nextLevelAnim;
@@ -482,8 +499,10 @@ function restoreHighscore() {
 let lastTimeItSpawn = 0;
 function spawnBombEnemy() {
   if (!player.isPlaying) return;
+  if (lastTimeItSpawn === 0) lastTimeItSpawn = Date.now() + 5000;
   if (Date.now() < lastTimeItSpawn) return;
-  lastTimeItSpawn = Date.now() + 5000;
+
+  lastTimeItSpawn = Date.now() + 2000;
 
   for (let i = 0; i < tilesArray.length; i++) {
     const tile = tilesArray[i];
@@ -491,8 +510,6 @@ function spawnBombEnemy() {
     if (!tile.floor) continue;
     if (Math.random() > 0.1) continue;
     if (enemyBombSpawn > playerLevel) continue;
-
-    tile.passable = false;
 
     enemyBombSpawn++;
     bombsArray.push(
@@ -502,7 +519,7 @@ function spawnBombEnemy() {
         tileSize: tileSize,
         canvas: canvas,
         image: maxBombImg,
-        passable: false,
+        passable: true,
         maxFrame: 3,
         frameWidth: tileSize,
         frameHeigth: tileSize,
@@ -510,13 +527,22 @@ function spawnBombEnemy() {
         bombImage: boomSFXImg,
         bomb: true,
         bombMaxFrame: 7,
-        bombDelay: 3,
+        bombDelay: 1,
         breakable: true,
         bombEnemy: true,
         bombRadius: 1,
       })
     );
+  }
 
-    return;
+  console.log(enemyBombSpawn, playerLevel);
+}
+
+function playTheme() {
+  if (theme.currentTime >= theme.duration) {
+    if (player.remove) return;
+    theme.pause();
+    theme.currentTime = 0;
+    theme.play();
   }
 }
