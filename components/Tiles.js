@@ -1,3 +1,7 @@
+const walkAudio = new Audio("./sound/walk.wav");
+const nextAudio = new Audio("./sound/next.wav");
+const explosion = new Audio("./sound/explosion.wav");
+
 export default class Tiles {
   constructor({
     canvas,
@@ -92,6 +96,7 @@ export default class Tiles {
 
     if (now > this.explosionTime) {
       this.visible = false;
+      explosion.play();
 
       if (this.bombCurrentFrame >= this.bombMaxFrame) {
         this.remove = true;
@@ -152,6 +157,7 @@ export default class Tiles {
         if (this.nextLevel) {
           this.moveNext = true;
           this.nextLevel = false;
+          nextAudio.play();
         }
       }
     } else {
@@ -185,9 +191,13 @@ export default class Tiles {
             }
             if (obs.exit) {
               this.nextLevel = true;
+              nextAudio.play();
             }
 
             this.position.y -= this.tileSize;
+            walkAudio.pause();
+            walkAudio.currentTime = 0;
+            walkAudio.play();
             return;
           }
           break;
@@ -203,9 +213,13 @@ export default class Tiles {
             }
             if (obs.exit) {
               this.nextLevel = true;
+              nextAudio.play();
             }
 
             this.position.y += this.tileSize;
+            walkAudio.pause();
+            walkAudio.currentTime = 0;
+            walkAudio.play();
             return;
           }
           break;
@@ -221,9 +235,13 @@ export default class Tiles {
             }
             if (obs.exit) {
               this.nextLevel = true;
+              nextAudio.play();
             }
 
             this.position.x -= this.tileSize;
+            walkAudio.pause();
+            walkAudio.currentTime = 0;
+            walkAudio.play();
             return;
           }
           break;
@@ -239,9 +257,13 @@ export default class Tiles {
             }
             if (obs.exit) {
               this.nextLevel = true;
+              nextAudio.play();
             }
 
             this.position.x += this.tileSize;
+            walkAudio.pause();
+            walkAudio.currentTime = 0;
+            walkAudio.play();
             return;
           }
           break;

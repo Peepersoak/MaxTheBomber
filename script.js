@@ -7,6 +7,8 @@ loadAllImages();
 
 const utils = new Utils();
 
+const plantAudio = new Audio("./sound/plant.wav");
+
 const boomSFXImg = utils.requestImage({ source: "./img/BoomSFX.png" });
 const deathImg = utils.requestImage({ source: "./img/DeathSFX.png" });
 const nextLevelAnim = utils.requestImage({ source: "./img/MaxNext.png" });
@@ -264,13 +266,13 @@ window.addEventListener("keydown", (event) => {
         breakable: true,
       });
       bombsArray.push(bomb);
+      plantAudio.play();
       break;
   }
 });
 
 function animate() {
   requestAnimationFrame(animate);
-  console.log();
 
   c.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -348,6 +350,7 @@ function animate() {
                 bombImage: boomSFXImg,
                 bomb: true,
                 bombMaxFrame: 7,
+                bombDelay: 1,
                 breakable: true,
               });
               bombsArray.push(bomb);
