@@ -59,6 +59,7 @@ let playerScore = 0;
 let playerHighScore = 0;
 
 let enemyBombSpawn = 0;
+let enemyBombLimit = 1;
 
 function initMap() {
   const map = mapLevel.find((map) => map.level === playerMapLevel);
@@ -435,6 +436,7 @@ function animate() {
     if (player.moveNext) {
       player.moveNext = false;
       playerLevel++;
+      enemyBombLimit += 0.2;
       if (currentLevelCount >= 4) {
         currentLevelCount = 0;
         if (grid < 20) {
@@ -509,7 +511,7 @@ function spawnBombEnemy() {
 
     if (!tile.floor) continue;
     if (Math.random() > 0.1) continue;
-    if (enemyBombSpawn > playerLevel) continue;
+    if (enemyBombSpawn > enemyBombLimit) continue;
 
     enemyBombSpawn++;
     bombsArray.push(

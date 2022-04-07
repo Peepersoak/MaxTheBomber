@@ -92,3 +92,24 @@ canvas {
     transform: translateY(10px);
   }
 }
+
+@media only screen and (max-height: 500px) {
+  .text-wrapper {
+    font-size: 7px;
+    padding-top: 10px;
+  }
+}
+
+@media only screen and (max-width: 930px) {
+  .menu {
+    max-width: 100vw;
+    max-height: 100vw;
+  }
+}
+
+@media only screen and (max-width: 500px) {
+  .text-wrapper {
+    font-size: 7px;
+    padding-top: 50px;
+  }
+}
