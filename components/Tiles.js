@@ -24,6 +24,7 @@ export default class Tiles {
     frameStagger = 10,
     isPlaying = false,
     nextLevel = false,
+    bombEnemy = false,
   }) {
     this.canvas = canvas;
     this.c = canvas ? this.canvas.getContext("2d") : undefined;
@@ -67,6 +68,7 @@ export default class Tiles {
     this.bombFrameStagger = 10;
     this.bombRadius = bombRadius;
     this.bombLimit = 1;
+    this.bombEnemy = bombEnemy;
   }
 
   getRemoveWalls() {

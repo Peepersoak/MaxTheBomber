@@ -57,6 +57,8 @@ let playerLevel = 0;
 let playerScore = 0;
 let playerHighScore = 0;
 
+let enemyBombSpawn = 0;
+
 function initMap() {
   const map = mapLevel.find((map) => map.level === playerMapLevel);
 
@@ -284,6 +286,7 @@ window.addEventListener("keydown", (event) => {
 
 function animate() {
   requestAnimationFrame(animate);
+
   level.textContent = `Level: ${playerLevel + 1}`;
   score.textContent = `Score: ${playerScore}`;
   highscore.textContent = `Highscore: ${playerHighScore}`;
@@ -300,7 +303,11 @@ function animate() {
     bomb.tick(player);
 
     if (bomb.remove) {
-      activeBomb--;
+      if (!bomb.bombEnemy) {
+        activeBomb--;
+      } else {
+        enemyBombSpawn--;
+      }
       const walls = bomb.getRemoveWalls();
       walls.forEach((wall) => {
         [...tilesArray, ...powerupArray].forEach((tile) => {
@@ -308,8 +315,8 @@ function animate() {
             if (tile.floor) {
               tile.passable = true;
             }
+            if (bomb.bombEnemy) return;
             if (tile.exit) {
-              playerScore += 10;
               tilesArray.push(
                 new Tile({
                   x: wall.posX,
@@ -377,6 +384,7 @@ function animate() {
               saveHighScore(playerScore);
               tile.passable = true;
               tile.visible = false;
+              tile.breakable = false;
               if (tile.powerup) tile.powerup = false;
             }
           }
@@ -391,6 +399,7 @@ function animate() {
 
   if (player) {
     player.update();
+    spawnBombEnemy();
     if (player.remove) {
       player.image = deathImg;
       player.maxFrame = 6;
@@ -467,5 +476,47 @@ function restoreHighscore() {
     playerHighScore = localStorage.getItem(gameName);
   } else {
     playerHighScore = 0;
+  }
+}
+
+let lastTimeItSpawn = 0;
+function spawnBombEnemy() {
+  if (!player.isPlaying) return;
+  if (Date.now() < lastTimeItSpawn) return;
+  lastTimeItSpawn = Date.now() + 5000;
+
+  for (let i = 0; i < tilesArray.length; i++) {
+    const tile = tilesArray[i];
+
+    if (!tile.floor) continue;
+    if (Math.random() > 0.1) continue;
+    if (enemyBombSpawn > playerLevel) continue;
+
+    tile.passable = false;
+
+    enemyBombSpawn++;
+    bombsArray.push(
+      new Tile({
+        x: tile.position.x,
+        y: tile.position.y,
+        tileSize: tileSize,
+        canvas: canvas,
+        image: maxBombImg,
+        passable: false,
+        maxFrame: 3,
+        frameWidth: tileSize,
+        frameHeigth: tileSize,
+        framePosition: 0,
+        bombImage: boomSFXImg,
+        bomb: true,
+        bombMaxFrame: 7,
+        bombDelay: 3,
+        breakable: true,
+        bombEnemy: true,
+        bombRadius: 1,
+      })
+    );
+
+    return;
   }
 }
